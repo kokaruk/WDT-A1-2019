@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace WdtAsrA1.DAL
 {
-    public interface IDalDbProxy
+    public interface IDalDbFacade
     {
         Task<dynamic> ExecuteScalarAsync(string procedure,
             Dictionary<string, dynamic> connParams = null);

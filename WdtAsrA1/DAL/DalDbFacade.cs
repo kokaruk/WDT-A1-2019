@@ -11,22 +11,22 @@ namespace WdtAsrA1.DAL
     /// database proxy class
     /// implements singleton and facade pattert
     /// </summary>
-    public class DalDbProxy : IDalDbProxy
+    public class DalDbFacade : IDalDbFacade
     {
         /// <summary>
         /// static instance holder
         /// </summary>
-        private static readonly Lazy<IDalDbProxy> _instance = new Lazy<IDalDbProxy>(() => new DalDbProxy());
+        private static readonly Lazy<IDalDbFacade> _instance = new Lazy<IDalDbFacade>(() => new DalDbFacade());
 
         /// <summary>
         /// accessor for instance
         /// </summary>
-        public static IDalDbProxy Instance => _instance.Value;
+        public static IDalDbFacade Instance => _instance.Value;
 
         /// <summary>
         /// private constructor
         /// </summary>
-        private DalDbProxy()
+        private DalDbFacade()
         {
         }
 

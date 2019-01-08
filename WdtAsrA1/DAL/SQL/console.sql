@@ -14,3 +14,11 @@ as
   where StartTime >= @Start
   and StartTime < @End;
 GO
+
+-- list staff procedure
+create proc dbo.[list staff]
+as 
+  select *
+  from dbo.[User]
+  where UserID like 'e%';
+go

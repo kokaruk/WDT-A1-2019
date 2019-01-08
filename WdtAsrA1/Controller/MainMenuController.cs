@@ -75,17 +75,26 @@ namespace WdtAsrA1.Controller
         /// </summary>
         private static void ListAllRooms()
         {
-            var roomsDisplay = new StringBuilder($"{Environment.NewLine}--- All rooms---");
+            try
+            {
+                var header = new StringBuilder($"{Environment.NewLine}--- All rooms---");
 
-            DalProxy
-                .MainMenu
-                .Rooms
-                .ToList()
-                .ForEach(r =>
-                    roomsDisplay.Append($"{Environment.NewLine}{r.RoomID}")
-                );
-            Console.WriteLine(roomsDisplay);
-            Console.WriteLine();
+                DalProxy
+                    .MainMenu
+                    .Rooms
+                    .ToList()
+                    .ForEach(r =>
+                        header.Append($"{Environment.NewLine}{r.RoomID}")
+                    );
+                Console.WriteLine(header);
+                Console.WriteLine();
+            }
+            catch (SqlException)
+            {
+                Console.WriteLine("<No Rooms>");
+                Console.WriteLine();
+            }
+            
         }
 
 
@@ -94,34 +103,43 @@ namespace WdtAsrA1.Controller
             Console.WriteLine();
             var date = GetDate("Enter date for slots (dd-mm-yyyy):");
 
-            var slots = DalProxy
-                .MainMenu
-                .Slots(date)
-                .ToList();
-
-
-            if (slots.Any())
+            try
             {
-                var slotsList = new StringBuilder($"{Environment.NewLine} --- List slots ---");
+                var slots = DalProxy
+                    .MainMenu
+                    .Slots(date)
+                    .ToList();
 
-                slotsList.Append(
-                    $"{Environment.NewLine}{"Room name",-11}{"Start time",-16}{"End time",-16}{"Staff ID",-14}Bookings");
+
+                if (slots.Any())
+                {
+                    var slotsList = new StringBuilder($"{Environment.NewLine} --- List slots ---");
+
+                    slotsList.Append(
+                        $"{Environment.NewLine}{"Room name",-11}{"Start time",-16}{"End time",-16}{"Staff ID",-14}Bookings");
 
 
-                slots
-                    .ForEach(s =>
-                        slotsList.Append(
-                            $"{Environment.NewLine}{s.RoomID,-11}{$"{s.StartTime:HH:mm}",-16}{$"{s.StartTime.AddHours(1):HH:mm}",-16}{s.StaffID,-14}{s.BookedInStudentId}")
-                    );
+                    slots
+                        .ForEach(s =>
+                            slotsList.Append(
+                                $"{Environment.NewLine}{s.RoomID,-11}{$"{s.StartTime:HH:mm}",-16}{$"{s.StartTime.AddHours(1):HH:mm}",-16}{s.StaffID,-14}{s.BookedInStudentId}")
+                        );
 
-                Console.WriteLine(slotsList);
-                Console.WriteLine();
+                    Console.WriteLine(slotsList);
+                    Console.WriteLine();
+                }
+                else
+                {
+                    Console.WriteLine("<no slots>");
+                    Console.WriteLine();
+                }
             }
-            else
+            catch (SqlException)
             {
                 Console.WriteLine("<no slots>");
                 Console.WriteLine();
             }
+            
         }
 
 

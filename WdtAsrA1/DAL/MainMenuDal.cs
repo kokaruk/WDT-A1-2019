@@ -7,7 +7,7 @@ namespace WdtAsrA1.DAL
 {
     /// <summary>
     /// main menu data accessor
-    /// implements singleton interface
+    /// implements singleton pattern
     /// </summary>
     public class MainMenuDal : IMainMenuDal
     {
@@ -17,9 +17,10 @@ namespace WdtAsrA1.DAL
         {
             get
             {
+                // ReSharper disable once InvertIf
                 if (_rooms == null || !_rooms.Any())
                 {
-                    var table = _dbProxy.GetDataTable("all rooms");
+                    var table = _dbFacade.GetDataTable("all rooms");
                     _rooms = table.Select().Select(x =>
                         new Room {RoomID = (string) x["RoomID"]}
                     ).ToList();
@@ -36,23 +37,24 @@ namespace WdtAsrA1.DAL
                 {"Start", date.Date},
                 {"End", date.AddDays(1).Date}
             };
-            var table = _dbProxy.GetDataTable("list slots for date", connParams);
+            var table = _dbFacade.GetDataTable("list slots for date", connParams);
             var items = table.Select().Select(x =>
                 new Slot
                 {
                     BookedInStudentId = (string) x["BookedInStudentId"],
-                    RoomID = (string)x["RoomID"],
-                    StaffID = (string)x["StaffID"],
-                    StartTime = (DateTime)x["StartTime"]
-                });
+                    RoomID = (string) x["RoomID"],
+                    StaffID = (string) x["StaffID"],
+                    StartTime = (DateTime) x["StartTime"]
+                }).ToList();
             return items;
         }
 
-        private static readonly Lazy<IMainMenuDal> _instance = new Lazy<IMainMenuDal>(() => new MainMenuDal());
+        private static readonly Lazy<IMainMenuDal> _instance = new Lazy<IMainMenuDal>(
+            () => new MainMenuDal());
 
         public static readonly IMainMenuDal Instance = _instance.Value;
 
-        private readonly IDalDbProxy _dbProxy = DalDbProxy.Instance;
+        private readonly IDalDbFacade _dbFacade = DalDbFacade.Instance;
 
         // private constructor
         private MainMenuDal()
