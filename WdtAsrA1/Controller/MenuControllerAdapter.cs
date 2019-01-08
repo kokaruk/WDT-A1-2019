@@ -27,6 +27,9 @@ namespace WdtAsrA1.Controller
             GetInput();
         }
 
+        /// <summary>
+        /// primary get input to select child sub controller
+        /// </summary>
         protected virtual void GetInput()
         {
             var maxInput = BuildMenu(out var menu);

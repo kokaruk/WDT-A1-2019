@@ -44,19 +44,19 @@ namespace WdtAsrA1.Controller
 
             while (true)
             {
-                var userLogon = SelectUserMenu(extraOptions);
+                var mainMenuOutput = SelectUserMenu(extraOptions);
                 var maxInput =
                     Enum.GetNames(typeof(UserType)).Length + extraOptions.Count; // extra two options for listings 
-                var option = GetInput(userLogon.ToString(), ++maxInput);
+                var option = GetInput(mainMenuOutput.ToString(), ++maxInput);
                 while (option < 0)
                 {
-                    option = GetInput(maxInput: ++maxInput);
+                    option = GetInput(maxInput: maxInput);
                 }
+
                 if (option == maxInput) Environment.Exit(0);
 
                 switch (option)
                 {
-                    
                     case 1:
                         ListAllRooms();
                         break;
@@ -64,8 +64,9 @@ namespace WdtAsrA1.Controller
                         ListSlots();
                         break;
                     default:
-                        var selectedUserNumber = option - extraOptions.Count; // reverse compensation fro first two options
-                        return (UserType)selectedUserNumber;
+                        var selectedUserNumber =
+                            option - extraOptions.Count; // reverse compensation fro first two options
+                        return (UserType) selectedUserNumber;
                 }
             }
         }
@@ -94,14 +95,13 @@ namespace WdtAsrA1.Controller
                 Console.WriteLine("<No Rooms>");
                 Console.WriteLine();
             }
-            
         }
 
 
         private static void ListSlots()
         {
             Console.WriteLine();
-            var date = GetDate("Enter date for slots (dd-mm-yyyy):");
+            var date = GetDate("Enter date for slots (d-m-yyyy):");
 
             try
             {
@@ -113,19 +113,9 @@ namespace WdtAsrA1.Controller
 
                 if (slots.Any())
                 {
-                    var slotsList = new StringBuilder($"{Environment.NewLine} --- List slots ---");
-
-                    slotsList.Append(
-                        $"{Environment.NewLine}{"Room name",-11}{"Start time",-16}{"End time",-16}{"Staff ID",-14}Bookings");
-
-
-                    slots
-                        .ForEach(s =>
-                            slotsList.Append(
-                                $"{Environment.NewLine}{s.RoomID,-11}{$"{s.StartTime:HH:mm}",-16}{$"{s.StartTime.AddHours(1):HH:mm}",-16}{s.StaffID,-14}{s.BookedInStudentId}")
-                        );
-
-                    Console.WriteLine(slotsList);
+                    var slotsListOutput = new StringBuilder();
+                    slotsListOutput.SlotsListOutput(slots);
+                    Console.WriteLine(slotsListOutput);
                     Console.WriteLine();
                 }
                 else
@@ -139,7 +129,6 @@ namespace WdtAsrA1.Controller
                 Console.WriteLine("<no slots>");
                 Console.WriteLine();
             }
-            
         }
 
 
@@ -164,9 +153,9 @@ namespace WdtAsrA1.Controller
             Enum.GetNames(typeof(UserType))
                 .ToList()
                 .ForEach(userType => primaryMenu.Append($"{Environment.NewLine}{++count}. {userType} menu"));
-            
+
             primaryMenu.Append($"{Environment.NewLine}{++count}. Quit{Environment.NewLine}");
-            
+
             return primaryMenu;
         }
     }

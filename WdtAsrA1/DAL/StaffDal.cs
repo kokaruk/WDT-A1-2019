@@ -15,7 +15,7 @@ namespace WdtAsrA1.DAL
 
         private IEnumerable<User> _users;
 
-        public IEnumerable<User> Users
+        public IEnumerable<User> StaffUsers
         {
             get
             {
@@ -43,6 +43,38 @@ namespace WdtAsrA1.DAL
 
         private StaffDal()
         {
+        }
+
+        public IEnumerable<Slot> Slots(DateTime date, Room room)
+        {
+            var connParams = new Dictionary<string, dynamic>
+            {
+                {"Start", date.Date},
+                {"End", date.AddDays(1).Date},
+                {"RoomID", room.RoomID}
+            };
+            var table = _dbFacade.GetDataTable("check room availability", connParams);
+            var items = table.Select().Select(x =>
+                new Slot
+                {
+                    BookedInStudentId = (string) x["BookedInStudentId"],
+                    RoomID = (string) x["RoomID"],
+                    StaffID = (string) x["StaffID"],
+                    StartTime = (DateTime) x["StartTime"]
+                }).ToList();
+            return items;
+        }
+
+        public void CreateSlot(string RoomID, DateTime StartTime, string StaffID)
+        {
+            var connParams = new Dictionary<string, dynamic>
+            {
+                {"RoomID", RoomID},
+                {"StartTime", StartTime},
+                {"StaffID", StaffID}
+            };
+
+            _dbFacade.ExecuteNonQuery("add new slot", connParams);
         }
     }
 }
