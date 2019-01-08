@@ -13,14 +13,14 @@ namespace WdtAsrA1.Controller
 {
     internal class MainMenuController : BaseController
     {
-        internal User LoggedOnUser { get; private set; }
+        internal UserType CurrentUserType { get; private set; }
         private Lazy<BaseController> _primaryController;
         private BaseController PrimaryBaseController => _primaryController.Value;
 
 
         internal override void Start()
         {
-            LoggedOnUser = Login();
+            CurrentUserType = UserSelect();
             _primaryController = new Lazy<BaseController>(BuildPrimaryController(this));
             PrimaryBaseController.Start();
         }
@@ -30,7 +30,7 @@ namespace WdtAsrA1.Controller
         /// potentially possible to inject real login from console
         /// </summary>
         /// <returns>by default returns fake user</returns>
-        private User Login()
+        private UserType UserSelect()
         {
             Debug.Assert(Program.PrototypeMode);
 
@@ -40,20 +40,23 @@ namespace WdtAsrA1.Controller
             Console.WriteLine(greetingHeader.MenuHeaderPad());
 
             // optional params
-            List<string> extraOptions = new List<string> {"List rooms", "List slots"};
+            var extraOptions = new List<string> {"List rooms", "List slots"};
 
             while (true)
             {
                 var userLogon = SelectUserMenu(extraOptions);
                 var maxInput =
-                    Enum.GetNames(typeof(UserType)).Length + extraOptions.Count; // extra two options for listings
-                userLogon.Append($"{Environment.NewLine}{++maxInput}. Quit{Environment.NewLine}");
-                var option = GetInput(userLogon.ToString(), maxInput);
-                if (option < 0) continue;
+                    Enum.GetNames(typeof(UserType)).Length + extraOptions.Count; // extra two options for listings 
+                var option = GetInput(userLogon.ToString(), ++maxInput);
+                while (option < 0)
+                {
+                    option = GetInput(maxInput: ++maxInput);
+                }
                 if (option == maxInput) Environment.Exit(0);
 
                 switch (option)
                 {
+                    
                     case 1:
                         ListAllRooms();
                         break;
@@ -61,9 +64,8 @@ namespace WdtAsrA1.Controller
                         ListSlots();
                         break;
                     default:
-                        option -= extraOptions.Count; // reverse compensation fro first two options
-                        var user = UserFactory.MakeUserFromInt(--option);
-                        return user;
+                        var selectedUserNumber = option - extraOptions.Count; // reverse compensation fro first two options
+                        return (UserType)selectedUserNumber;
                 }
             }
         }
@@ -81,8 +83,9 @@ namespace WdtAsrA1.Controller
                 .ToList()
                 .ForEach(r =>
                     roomsDisplay.Append($"{Environment.NewLine}{r.RoomID}")
-                    );
+                );
             Console.WriteLine(roomsDisplay);
+            Console.WriteLine();
         }
 
 
@@ -90,9 +93,37 @@ namespace WdtAsrA1.Controller
         {
             Console.WriteLine();
             var date = GetDate("Enter date for slots (dd-mm-yyyy):");
-            Console.WriteLine(date.Date);
+
+            var slots = DalProxy
+                .MainMenu
+                .Slots(date)
+                .ToList();
+
+
+            if (slots.Any())
+            {
+                var slotsList = new StringBuilder($"{Environment.NewLine} --- List slots ---");
+
+                slotsList.Append(
+                    $"{Environment.NewLine}{"Room name",-11}{"Start time",-16}{"End time",-16}{"Staff ID",-14}Bookings");
+
+
+                slots
+                    .ForEach(s =>
+                        slotsList.Append(
+                            $"{Environment.NewLine}{s.RoomID,-11}{$"{s.StartTime:HH:mm}",-16}{$"{s.StartTime.AddHours(1):HH:mm}",-16}{s.StaffID,-14}{s.BookedInStudentId}")
+                    );
+
+                Console.WriteLine(slotsList);
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("<no slots>");
+                Console.WriteLine();
+            }
         }
-        
+
 
         /// <summary>
         /// build user type select menu
@@ -111,10 +142,13 @@ namespace WdtAsrA1.Controller
 
             extraOptions
                 .ForEach(opt => primaryMenu.Append($"{Environment.NewLine}{++count}. {opt}"));
-            
+
             Enum.GetNames(typeof(UserType))
                 .ToList()
                 .ForEach(userType => primaryMenu.Append($"{Environment.NewLine}{++count}. {userType} menu"));
+            
+            primaryMenu.Append($"{Environment.NewLine}{++count}. Quit{Environment.NewLine}");
+            
             return primaryMenu;
         }
     }

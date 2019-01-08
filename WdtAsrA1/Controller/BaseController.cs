@@ -34,7 +34,7 @@ namespace WdtAsrA1.Controller
             {
                 var baseNamespaceName = mainMenuController.GetType().Namespace;
                 var controllerTypeName =
-                    $"{baseNamespaceName}.{mainMenuController.LoggedOnUser.UserType.ToString()}Primary";
+                    $"{baseNamespaceName}.{mainMenuController.CurrentUserType.ToString()}Primary";
                 // use reflection to create instance 
                 var controllerType = Type.GetType(controllerTypeName, true);
                 var instance = (BaseController) Activator.CreateInstance(controllerType, mainMenuController);

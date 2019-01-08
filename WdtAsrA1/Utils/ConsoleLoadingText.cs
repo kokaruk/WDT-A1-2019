@@ -22,7 +22,6 @@ namespace WdtAsrA1.Utils
         /// </summary>
         public void Display()
         {
-            Console.Clear();
             Task.Run(() =>
             {
                 while (_continue)
@@ -40,6 +39,7 @@ namespace WdtAsrA1.Utils
         public void Stop()
         {
             _continue = false;
+            Console.Write($"\r{string.Empty.PadLeft(DefaultLoadingText.Length+2)}");
         }
     }
 }
