@@ -15,6 +15,16 @@ as
   and StartTime < @End;
 GO
 
+-- slots for stuff member
+create proc dbo.[list slots for staff] @StaffID as nvarchar(8), @CurrentTime as DATETIME2
+as
+SELECT *
+FROM Slot
+where StaffID = @StaffID
+and Slot.StartTime > @CurrentTime
+order by Slot.StartTime ASC 
+GO
+
 -- list staff procedure
 create proc dbo.[list staff]
 as 
@@ -39,6 +49,15 @@ create proc dbo.[add new slot] @RoomID as nvarchar(10), @StartTime as DATETIME2,
 as
 insert into Slot (RoomID, StartTime, StaffID)
 values (@RoomID,@StartTime,@StaffID);  
-  go
+go;
+  
+  
+-- remove slot
+create proc dbo.[delete slot] @RoomID as nvarchar(10), @StartTime as DATETIME2
+as 
+  delete from Slot
+  where RoomID = @RoomID
+  and StartTime = @StartTime;
+go;
 
-exec [add new slot] 'A', '2019-01-11 14:00:00.0940000', 'e12345'
+

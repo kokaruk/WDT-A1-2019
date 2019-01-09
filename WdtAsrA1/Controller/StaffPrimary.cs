@@ -72,38 +72,17 @@ namespace WdtAsrA1.Controller
             return counter;
         }
 
-        private void ListStaff()
-        {
-            var staff = DalFactory.UserDal.StaffUsers.ToList();
-            if (staff.Any())
-            {
-                var staffList = new StringBuilder($"{Environment.NewLine} --- all staff ---");
-                staffList.Append(
-                    $"{Environment.NewLine}{"User Id",-11}{"Name",-11}Email");
-                staff
-                    .ForEach(user =>
-                        staffList.Append(
-                            $"{Environment.NewLine}{user.UserID,-11}{user.Name,-11}{user.Email}")
-                    );
-                Message = staffList.ToString();
-            }
-            else
-            {
-                Message = "<no staff found";
-            }
-        }
 
         private void RoomAvailability()
         {
             Message = string.Empty;
             var room = GetRoom();
             var date = GetDate();
-
             try
             {
                 var slots = room == null
-                    ? DalFactory.SlotDal.Slots(date).ToList()
-                    : DalFactory.SlotDal.Slots(date).ToList()
+                    ? DalFactory.SlotDal.SlotsForDate(date).ToList()
+                    : DalFactory.SlotDal.SlotsForDate(date).ToList()
                         .FindAll(slot => slot.StartTime.Date.Equals(date.Date));
                 if (slots.Any())
                 {
@@ -123,73 +102,22 @@ namespace WdtAsrA1.Controller
         }
 
 
-        private Room GetRoom(bool allowEmpty = true)
-        {
-            var header = new StringBuilder($"{Environment.NewLine}--- All rooms---");
-
-            DalFactory
-                .RoomDal
-                .Rooms
-                .ToList()
-                .ForEach(r => header.Append($"{Environment.NewLine}{r.RoomID}"));
-            Console.WriteLine(header);
-            Console.WriteLine(Message);
-            string roomId;
-            while (true)
-            {
-                var prompt = allowEmpty ? "Select Room ID (or empty input for all roms): " : "Type Room Name: ";
-
-                Console.Write(prompt);
-                roomId = Console.ReadLine();
-                if (string.IsNullOrWhiteSpace(roomId) && allowEmpty) return null;
-                if (string.IsNullOrWhiteSpace(roomId) && !allowEmpty) continue;
-                break;
-            }
-
-            try
-            {
-                return DalFactory.RoomDal.Rooms.First(room => room.RoomID.Equals(roomId.ToUpper()));
-            }
-            catch (Exception)
-            {
-                Message = "Incorrect input, try again";
-                return GetRoom();
-            }
-        }
-
-
-        private User GetStaff()
-        {
-            Console.WriteLine(Message);
-            Console.Write("Enter Staff ID: ");
-            string staffId;
-            while (true)
-            {
-                staffId = Console.ReadLine();
-                if (!string.IsNullOrWhiteSpace(staffId)) break;
-            }
-
-            try
-            {
-                return DalFactory.UserDal.StaffUsers.First(staff => staff.UserID.Equals(staffId.ToLower()));
-            }
-            catch (Exception)
-            {
-                Message = "Incorrect input, try again";
-                return GetStaff();
-            }
-        }
-
         private void CreateSlot()
         {
             var room = GetRoom(allowEmpty: false);
             var date = GetDate();
+            if (date.Date.Equals(DateTime.Now.Date) && DateTime.Now.Hour >= Program.WorkingHoursEnd)
+            {
+                Message = "School closed today already";
+                return;
+            }
+
             var timeDateTime = GetTime(date);
             var dateCombined = date.Date.Add(timeDateTime.TimeOfDay);
 
             // each room maximum 2 slots per day
             var roomBookings = DalFactory.SlotDal
-                .Slots(dateCombined)
+                .SlotsForDate(dateCombined)
                 .ToList()
                 .FindAll(slot => slot.RoomID.Equals(room.RoomID) && slot.StartTime.Date.Equals(dateCombined.Date));
             if (roomBookings.Count >= Program.DailyRoomBookings)
@@ -200,7 +128,7 @@ namespace WdtAsrA1.Controller
 
             // also check if room already booked at this time
             var roomIsBooked = DalFactory.SlotDal
-                .Slots(dateCombined)
+                .SlotsForDate(dateCombined)
                 .Any(slot => slot.RoomID.Equals(room.RoomID)
                              && slot.StartTime.Date == dateCombined.Date
                              && slot.StartTime.Hour == dateCombined.Hour);
@@ -216,7 +144,7 @@ namespace WdtAsrA1.Controller
             // check constraints
             // staff can have max 4 slots a day
             var staffBookings = DalFactory.SlotDal
-                .Slots(dateCombined)
+                .SlotsForDate(dateCombined)
                 .ToList()
                 .FindAll(slot => slot.StaffID.Equals(staff.UserID));
             if (staffBookings.Count >= Program.DailyStaffBookings)
@@ -230,55 +158,58 @@ namespace WdtAsrA1.Controller
         }
 
 
-        private static DateTime GetTime(DateTime date, string prompt = "Time (hh am/pm): ")
+        private void RemoveSlot()
         {
-            var enAu = new CultureInfo("en-AU");
-            while (true)
+            ListStaff();
+            const string message = "No upcoming slots for staff member";
+            var staff = GetStaff();
+            try
             {
-                Console.Write(prompt);
-                var input = Console.ReadLine();
-                var parsedInputTime = DateTime.TryParseExact(input, "h tt", enAu,
-                    DateTimeStyles.None, out var dateValue);
+                var slots = DalFactory.SlotDal
+                    .SlotsForStaff(staff).ToList();
 
-                if (parsedInputTime)
+                if (slots.Any())
                 {
-                    // check if within allowed working time
-                    if (dateValue.Hour >= Program.WorkingHoursStart && dateValue.Hour < Program.WorkingHoursEnd)
+                    var slotsView = BuilSlotsList(slots);
+                    var option = GetInput(slotsView.ToString(), slotsView.Length);
+                    var candidateSlot = slots[--option];
+                    if (string.IsNullOrWhiteSpace(candidateSlot.BookedInStudentId))
                     {
-                        // if date today check time is in future
-                        if (date.Date.Equals(DateTime.Now.Date) && dateValue.Hour > DateTime.Now.Hour)
-                        {
-                            Console.WriteLine("Select time in future");
-                            Console.WriteLine();
-                        }
-                        else
-                        {
-                            return dateValue;
-                        }
+                        DalFactory.SlotDal.DeleteSlot(candidateSlot);
+                        Message = "Slot removed successfully";
                     }
                     else
                     {
-                        var startTime = Program.WorkingHoursStart.ToString().PadLeft(2, '0');
-                        DateTime.TryParseExact(startTime, "HH", enAu,
-                            DateTimeStyles.None, out var start);
-                        DateTime.TryParseExact(Program.WorkingHoursEnd.ToString(), "HH", enAu,
-                            DateTimeStyles.None, out var end);
-                        Console.WriteLine($"Select slot time from working hours of {start:h:mm tt} to {end:h:mm tt}");
-                        Console.WriteLine();
+                        Message = "Can't delete booked slot";
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Invalid Input");
-                    Console.WriteLine();
+                    Message = message;
                 }
+            }
+            catch (SqlException)
+            {
+                Message = message;
             }
         }
 
+        
 
-        private void RemoveSlot()
+        private StringBuilder BuilSlotsList(List<Slot> slots)
         {
-            throw new NotImplementedException();
+            var slotsView = new StringBuilder();
+            slotsView.Append($"{Environment.NewLine} --- List slots ---");
+
+            slotsView.Append(
+                $"{Environment.NewLine}{"#",-3}{"Room",-7}{"Start time",-22}{"End time",-16}Bookings");
+            var rowNum = 0;
+            slots
+                .ForEach(s =>
+                    slotsView.Append(
+                        $"{Environment.NewLine}{++rowNum,-3}{s.RoomID,-7}{$"{s.StartTime:dd-MM-yyyy hh:mm tt}",-22}{$"{s.StartTime.AddMinutes(Program.SlotDuration):hh:mm tt}",-16}{s.BookedInStudentId}"));
+
+            return slotsView;
         }
     }
 }

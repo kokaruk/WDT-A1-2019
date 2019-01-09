@@ -15,7 +15,7 @@ namespace WdtAsrA1.DAL
         public static ISlotDal SlotDal => _slotDal.Value;
         
         private static readonly Lazy<IUserDal> _userDal = new Lazy<IUserDal>(() => DAL.UserDal.Instance);
-        public static IUserDal UserDal = _userDal.Value;
+        public static IUserDal UserDal => _userDal.Value;
 
     }
 }

@@ -25,7 +25,7 @@ namespace WdtAsrA1.DAL
         }
 
         
-        public IEnumerable<Slot> Slots(DateTime date)
+        public IEnumerable<Slot> SlotsForDate(DateTime date)
         {
             var connParams = new Dictionary<string, dynamic>
             {
@@ -46,16 +46,49 @@ namespace WdtAsrA1.DAL
             return items;
         }
         
-        public void CreateSlot(string RoomID, DateTime StartTime, string StaffID)
+        public IEnumerable<Slot> SlotsForStaff(User staff)
         {
             var connParams = new Dictionary<string, dynamic>
             {
-                {"RoomID", RoomID},
-                {"StartTime", StartTime},
-                {"StaffID", StaffID}
+                {"StaffID", staff.UserID},
+                {"CurrentTime", DateTime.Now}
+            };
+            var table = DalDbFacade.Instance.GetDataTable("list slots for staff", connParams);
+            var items = table.Select().Select(x =>
+                new Slot
+                {
+                    BookedInStudentId =  x["BookedInStudentId"] == DBNull.Value
+                        ? string.Empty
+                        : (string) x["BookedInStudentId"],
+                    RoomID = (string) x["RoomID"],
+                    StaffID = (string) x["StaffID"],
+                    StartTime = (DateTime) x["StartTime"]
+                }).ToList();
+            return items;
+        }
+        
+        public void CreateSlot(string roomId, DateTime startTime, string staffId)
+        {
+            var connParams = new Dictionary<string, dynamic>
+            {
+                {"RoomID", roomId},
+                {"StartTime", startTime},
+                {"StaffID", staffId}
             };
 
             DalDbFacade.Instance.ExecuteNonQuery("add new slot", connParams);
         }
+
+        public void DeleteSlot(Slot slot)
+        {
+            var connParams = new Dictionary<string, dynamic>
+            {
+                {"RoomID", slot.RoomID},
+                {"StartTime", slot.StartTime}
+            };
+
+            DalDbFacade.Instance.ExecuteNonQuery("delete slot", connParams);
+        }
+        
     }
 }

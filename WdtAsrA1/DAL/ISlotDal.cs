@@ -11,8 +11,17 @@ namespace WdtAsrA1.DAL
         /// </summary>
         /// <param name="date">date of slot</param>
         /// <returns>collection of slots</returns>
-        IEnumerable<Slot> Slots(DateTime date);
+        IEnumerable<Slot> SlotsForDate(DateTime date);
         
-        void CreateSlot(string RoomID, DateTime StartTime, string StaffID);
+        /// <summary>
+        /// get slots for staff member
+        /// </summary>
+        /// <param name="staff">staff of slot</param>
+        /// <returns>collection of slots</returns>
+        IEnumerable<Slot> SlotsForStaff(User staff);
+        
+        void CreateSlot(string roomId, DateTime startTime, string staffId);
+
+        void DeleteSlot(Slot slot);
     }
 }

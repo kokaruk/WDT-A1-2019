@@ -14,19 +14,18 @@ namespace WdtAsrA1.Controller
     internal class MainMenuController : BaseController
     {
         internal UserType CurrentUserType { get; private set; }
-        private Lazy<BaseController> _primaryController;
-        private BaseController PrimaryBaseController => _primaryController.Value;
+        private BaseController _primaryBaseController;
 
 
         internal override void Start()
         {
             CurrentUserType = UserSelect();
-            _primaryController = new Lazy<BaseController>(BuildPrimaryController(this));
-            PrimaryBaseController.Start();
+            _primaryBaseController = BuildPrimaryController(this);
+            _primaryBaseController.Start();
         }
 
         /// <summary>
-        /// login method
+        /// method to select user type 
         /// potentially possible to inject real login from console
         /// </summary>
         /// <returns>by default returns fake user</returns>
@@ -44,7 +43,7 @@ namespace WdtAsrA1.Controller
 
             while (true)
             {
-                var mainMenuOutput = SelectUserMenu(extraOptions);
+                var mainMenuOutput = BuildSelectUserMenu(extraOptions);
                 var maxInput =
                     Enum.GetNames(typeof(UserType)).Length + extraOptions.Count; // extra two options for listings 
                 var option = GetInput(mainMenuOutput.ToString(), ++maxInput);
@@ -107,7 +106,7 @@ namespace WdtAsrA1.Controller
             {
                 var slots = DalFactory
                     .SlotDal
-                    .Slots(date)
+                    .SlotsForDate(date)
                     .ToList();
 
 
@@ -136,15 +135,14 @@ namespace WdtAsrA1.Controller
         /// build user type select menu
         /// </summary>
         /// <returns>user logon requests</returns>
-        private static StringBuilder SelectUserMenu(List<string> extraOptions)
+        private static StringBuilder BuildSelectUserMenu(List<string> extraOptions)
         {
-            const string greetingHeader = "Main Menu";
+            const string greetingHeader = "-- Main Menu --";
 
             // essentially a hacky way to override console design limitation 
 
-            var primaryMenu = new StringBuilder(greetingHeader);
-            primaryMenu.Append($"{Environment.NewLine}{greetingHeader.MenuHeaderPad()}");
-
+            var primaryMenu = new StringBuilder(greetingHeader + Environment.NewLine);
+            
             var count = 0;
 
             extraOptions

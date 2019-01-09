@@ -103,7 +103,7 @@ namespace WdtAsrA1.Controller
                 if (DateTime.TryParseExact(input, "d-M-yyyy", enAu,
                     DateTimeStyles.None, out var dateValue) && dateValue.Date >= DateTime.Now.Date ) return dateValue;
 
-                if (dateValue < DateTime.Now)
+                if (dateValue.Date < DateTime.Now.Date)
                 {
                     Console.WriteLine("Can't travel in past time");
                     Console.WriteLine();   
