@@ -92,7 +92,7 @@ namespace WdtAsrA1.Controller
         /// get user input and translate to date
         /// </summary>
         /// <returns></returns>
-        internal static DateTime GetDate(string prompt = "Type Date (d-m-yyyy): ")
+        internal static DateTime GetDate(string prompt = "Date (d-m-yyyy): ")
         {
             var enAu = new CultureInfo("en-AU");
             

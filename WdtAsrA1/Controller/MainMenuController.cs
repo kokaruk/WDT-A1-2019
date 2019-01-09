@@ -80,8 +80,8 @@ namespace WdtAsrA1.Controller
             {
                 var header = new StringBuilder($"{Environment.NewLine}--- All rooms---");
 
-                DalProxy
-                    .MainMenu
+                DalFactory
+                    .RoomDal
                     .Rooms
                     .ToList()
                     .ForEach(r =>
@@ -105,8 +105,8 @@ namespace WdtAsrA1.Controller
 
             try
             {
-                var slots = DalProxy
-                    .MainMenu
+                var slots = DalFactory
+                    .SlotDal
                     .Slots(date)
                     .ToList();
 

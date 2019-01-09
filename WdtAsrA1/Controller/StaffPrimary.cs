@@ -74,7 +74,7 @@ namespace WdtAsrA1.Controller
 
         private void ListStaff()
         {
-            var staff = DalProxy.StaffMenu.StaffUsers.ToList();
+            var staff = DalFactory.UserDal.StaffUsers.ToList();
             if (staff.Any())
             {
                 var staffList = new StringBuilder($"{Environment.NewLine} --- all staff ---");
@@ -102,9 +102,9 @@ namespace WdtAsrA1.Controller
             try
             {
                 var slots = room == null
-                    ? DalProxy.MainMenu.Slots(date).ToList()
-                    : DalProxy.StaffMenu.Slots(date, room).ToList();
-
+                    ? DalFactory.SlotDal.Slots(date).ToList()
+                    : DalFactory.SlotDal.Slots(date).ToList()
+                        .FindAll(slot => slot.StartTime.Date.Equals(date.Date));
                 if (slots.Any())
                 {
                     var slotsListOutput = new StringBuilder();
@@ -127,8 +127,8 @@ namespace WdtAsrA1.Controller
         {
             var header = new StringBuilder($"{Environment.NewLine}--- All rooms---");
 
-            DalProxy
-                .MainMenu
+            DalFactory
+                .RoomDal
                 .Rooms
                 .ToList()
                 .ForEach(r => header.Append($"{Environment.NewLine}{r.RoomID}"));
@@ -148,7 +148,7 @@ namespace WdtAsrA1.Controller
 
             try
             {
-                return DalProxy.MainMenu.Rooms.First(room => room.RoomID.Equals(roomId.ToUpper()));
+                return DalFactory.RoomDal.Rooms.First(room => room.RoomID.Equals(roomId.ToUpper()));
             }
             catch (Exception)
             {
@@ -171,7 +171,7 @@ namespace WdtAsrA1.Controller
 
             try
             {
-                return DalProxy.StaffMenu.StaffUsers.First(staff => staff.UserID.Equals(staffId.ToLower()));
+                return DalFactory.UserDal.StaffUsers.First(staff => staff.UserID.Equals(staffId.ToLower()));
             }
             catch (Exception)
             {
@@ -184,12 +184,12 @@ namespace WdtAsrA1.Controller
         {
             var room = GetRoom(allowEmpty: false);
             var date = GetDate();
-            var timeDateTime = GetTime();
+            var timeDateTime = GetTime(date);
             var dateCombined = date.Date.Add(timeDateTime.TimeOfDay);
 
             // each room maximum 2 slots per day
-            var roomBookings = DalProxy.StaffMenu
-                .Slots(dateCombined, room)
+            var roomBookings = DalFactory.SlotDal
+                .Slots(dateCombined)
                 .ToList()
                 .FindAll(slot => slot.RoomID.Equals(room.RoomID) && slot.StartTime.Date.Equals(dateCombined.Date));
             if (roomBookings.Count >= Program.DailyRoomBookings)
@@ -199,8 +199,8 @@ namespace WdtAsrA1.Controller
             }
 
             // also check if room already booked at this time
-            var roomIsBooked = DalProxy.StaffMenu
-                .Slots(dateCombined, room)
+            var roomIsBooked = DalFactory.SlotDal
+                .Slots(dateCombined)
                 .Any(slot => slot.RoomID.Equals(room.RoomID)
                              && slot.StartTime.Date == dateCombined.Date
                              && slot.StartTime.Hour == dateCombined.Hour);
@@ -215,7 +215,7 @@ namespace WdtAsrA1.Controller
 
             // check constraints
             // staff can have max 4 slots a day
-            var staffBookings = DalProxy.MainMenu
+            var staffBookings = DalFactory.SlotDal
                 .Slots(dateCombined)
                 .ToList()
                 .FindAll(slot => slot.StaffID.Equals(staff.UserID));
@@ -225,12 +225,12 @@ namespace WdtAsrA1.Controller
                 return;
             }
 
-            DalProxy.StaffMenu.CreateSlot(room.RoomID, dateCombined, staff.UserID);
+            DalFactory.SlotDal.CreateSlot(room.RoomID, dateCombined, staff.UserID);
             Message = "New slot added";
         }
 
 
-        private static DateTime GetTime(string prompt = "Time (hh am/pm): ")
+        private static DateTime GetTime(DateTime date, string prompt = "Time (hh am/pm): ")
         {
             var enAu = new CultureInfo("en-AU");
             while (true)
@@ -242,11 +242,19 @@ namespace WdtAsrA1.Controller
 
                 if (parsedInputTime)
                 {
+                    // check if within allowed working time
                     if (dateValue.Hour >= Program.WorkingHoursStart && dateValue.Hour < Program.WorkingHoursEnd)
                     {
-                        if (dateValue.Hour > DateTime.Now.Hour) return dateValue;
-                        Console.WriteLine("Select time in future");
-                        Console.WriteLine();
+                        // if date today check time is in future
+                        if (date.Date.Equals(DateTime.Now.Date) && dateValue.Hour > DateTime.Now.Hour)
+                        {
+                            Console.WriteLine("Select time in future");
+                            Console.WriteLine();
+                        }
+                        else
+                        {
+                            return dateValue;
+                        }
                     }
                     else
                     {
