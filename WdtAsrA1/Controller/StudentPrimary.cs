@@ -72,7 +72,7 @@ namespace WdtAsrA1.Controller
             var date = GetDate("Enter date for staff availability (dd-mm-yyyy): ");
             ListUsers('e');
             var staff = GetUser('e');
-            var staffBookings = DalFactory.SlotDal
+            var staffBookings = DalFacade.SlotDal
                 .SlotsForDate(date)
                 .ToList()
                 .FindAll(slot => slot.StaffID.Equals(staff.UserID) && string.IsNullOrWhiteSpace(slot.BookedInStudentId));
@@ -115,7 +115,7 @@ namespace WdtAsrA1.Controller
             var student = GetUser('s');
 
             // check if student already has booking for this day
-            if (DalFactory.SlotDal
+            if (DalFacade.SlotDal
                 .SlotsForDate(date)
                 .Any(slot => slot.BookedInStudentId.Equals(student.UserID)))
             {
@@ -124,7 +124,7 @@ namespace WdtAsrA1.Controller
             }
                 
             
-            var staffBookings = DalFactory.SlotDal
+            var staffBookings = DalFacade.SlotDal
                 .SlotsForDate(date)
                 .ToList()
                 .FindAll(slot => slot.StaffID.Equals(staff.UserID) && string.IsNullOrWhiteSpace(slot.BookedInStudentId));
@@ -133,7 +133,7 @@ namespace WdtAsrA1.Controller
                 var slotsView = BuildSlotsList(staffBookings, staff, date);
                 var option = GetInput(slotsView.ToString(), slotsView.Length);
                 var candidateSlot = staffBookings[--option];
-                DalFactory.SlotDal.BookSlot(candidateSlot, student);
+                DalFacade.SlotDal.BookSlot(candidateSlot, student);
 
                 Message = "Slot booked successfully";
             }
@@ -149,7 +149,7 @@ namespace WdtAsrA1.Controller
             var date = GetDate("Enter date for slot (dd-mm-yyyy): ");
             ListUsers('e');
             var staff = GetUser('e');
-            var staffBookings = DalFactory.SlotDal
+            var staffBookings = DalFacade.SlotDal
                 .SlotsForDate(date)
                 .ToList()
                 .FindAll(slot => slot.StaffID.Equals(staff.UserID) && !string.IsNullOrWhiteSpace(slot.BookedInStudentId));
@@ -158,7 +158,7 @@ namespace WdtAsrA1.Controller
                 var slotsView = BuildSlotsList(staffBookings, staff, date);
                 var option = GetInput(slotsView.ToString(), slotsView.Length);
                 var candidateSlot = staffBookings[--option];
-                DalFactory.SlotDal.UnbookSlot(candidateSlot);
+                DalFacade.SlotDal.UnbookSlot(candidateSlot);
                 
                 Message = "Slot cancelled successfully";
             }

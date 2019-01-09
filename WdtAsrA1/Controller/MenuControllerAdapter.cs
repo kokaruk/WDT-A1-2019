@@ -95,7 +95,7 @@ namespace WdtAsrA1.Controller
         protected void ListUsers(char userIdDescriptor)
         {
             var userType = userIdDescriptor == 'e' ? "Staff" : "Students";
-            var users = DalFactory.UserDal.GetAllUsers().ToList()
+            var users = DalFacade.UserDal.GetAllUsers().ToList()
                 .FindAll(user => user.UserID.StartsWith(userIdDescriptor));
             if (users.Any())
             {
@@ -135,7 +135,7 @@ namespace WdtAsrA1.Controller
         {
             var header = new StringBuilder($"{Environment.NewLine}--- All rooms---");
 
-            DalFactory
+            DalFacade
                 .RoomDal
                 .Rooms
                 .ToList()
@@ -156,7 +156,7 @@ namespace WdtAsrA1.Controller
 
             try
             {
-                return DalFactory.RoomDal.Rooms.First(room => room.RoomID.Equals(roomId.ToUpper()));
+                return DalFacade.RoomDal.Rooms.First(room => room.RoomID.Equals(roomId.ToUpper()));
             }
             catch (Exception)
             {
@@ -183,7 +183,7 @@ namespace WdtAsrA1.Controller
 
             try
             {
-                return DalFactory.UserDal.GetAllUsers().First(user =>
+                return DalFacade.UserDal.GetAllUsers().First(user =>
                     user.UserID.Equals(userId.ToLower()) && user.UserID.StartsWith(userIdDescriptor));
             }
             catch (Exception)

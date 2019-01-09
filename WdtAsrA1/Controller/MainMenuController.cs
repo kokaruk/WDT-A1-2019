@@ -79,7 +79,7 @@ namespace WdtAsrA1.Controller
             {
                 var header = new StringBuilder($"{Environment.NewLine}--- All rooms---");
 
-                DalFactory
+                DalFacade
                     .RoomDal
                     .Rooms
                     .ToList()
@@ -104,7 +104,7 @@ namespace WdtAsrA1.Controller
 
             try
             {
-                var slots = DalFactory
+                var slots = DalFacade
                     .SlotDal
                     .SlotsForDate(date)
                     .ToList();

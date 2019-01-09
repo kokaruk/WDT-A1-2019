@@ -6,7 +6,7 @@ namespace WdtAsrA1.DAL
     /// DAL. Returns instances of data Accessors
     /// And performs proxy functions for various sql operations
     /// </summary>
-    public static class DalFactory
+    public static class DalFacade
     {
         private static readonly Lazy<IRoomDal> _roomDal = new Lazy<IRoomDal>(() => DAL.RoomDal.Instance);
         public static IRoomDal RoomDal => _roomDal.Value;

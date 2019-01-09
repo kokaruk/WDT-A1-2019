@@ -76,13 +76,13 @@ namespace WdtAsrA1.Controller
             try
             {
                 // stack overflow dot com FTW
-                var duplicates = DalFactory.SlotDal
+                var duplicates = DalFacade.SlotDal
                     .SlotsForDate(date)
                     .GroupBy(s => s.RoomID)
                     .Where(g => g.Skip(1).Any())
                     .Select(g => g.Key);
 
-                var rooms = DalFactory
+                var rooms = DalFacade
                     .RoomDal
                     .Rooms
                     .Where(room => !duplicates.Contains(room.RoomID));
@@ -116,7 +116,7 @@ namespace WdtAsrA1.Controller
             var dateCombined = date.Date.Add(timeDateTime.TimeOfDay);
 
             // each room maximum 2 slots per day
-            var roomBookings = DalFactory.SlotDal
+            var roomBookings = DalFacade.SlotDal
                 .SlotsForDate(dateCombined)
                 .ToList()
                 .FindAll(slot => slot.RoomID.Equals(room.RoomID) && slot.StartTime.Date.Equals(dateCombined.Date));
@@ -127,7 +127,7 @@ namespace WdtAsrA1.Controller
             }
 
             // also check if room already booked at this time
-            var roomIsBooked = DalFactory.SlotDal
+            var roomIsBooked = DalFacade.SlotDal
                 .SlotsForDate(dateCombined)
                 .Any(slot => slot.RoomID.Equals(room.RoomID)
                              && slot.StartTime.Date == dateCombined.Date
@@ -143,7 +143,7 @@ namespace WdtAsrA1.Controller
 
             // check constraints
             // staff can have max 4 slots a day
-            var staffBookings = DalFactory.SlotDal
+            var staffBookings = DalFacade.SlotDal
                 .SlotsForDate(dateCombined)
                 .ToList()
                 .FindAll(slot => slot.StaffID.Equals(staff.UserID));
@@ -159,7 +159,7 @@ namespace WdtAsrA1.Controller
                 return;
             }
 
-            DalFactory.SlotDal.CreateSlot(room.RoomID, dateCombined, staff.UserID);
+            DalFacade.SlotDal.CreateSlot(room.RoomID, dateCombined, staff.UserID);
             Message = "New slot added";
         }
 
@@ -171,7 +171,7 @@ namespace WdtAsrA1.Controller
             var staff = GetUser('e');
             try
             {
-                var slots = DalFactory.SlotDal
+                var slots = DalFacade.SlotDal
                     .SlotsForStaff(staff).ToList();
 
                 if (slots.Any())
@@ -181,7 +181,7 @@ namespace WdtAsrA1.Controller
                     var candidateSlot = slots[--option];
                     if (string.IsNullOrWhiteSpace(candidateSlot.BookedInStudentId))
                     {
-                        DalFactory.SlotDal.DeleteSlot(candidateSlot);
+                        DalFacade.SlotDal.DeleteSlot(candidateSlot);
                         Message = "Slot removed successfully";
                     }
                     else
