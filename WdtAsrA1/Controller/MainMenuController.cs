@@ -13,24 +13,23 @@ namespace WdtAsrA1.Controller
 {
     internal class MainMenuController : BaseController
     {
-        internal User LoggedOnUser { get; private set; }
-        private Lazy<BaseController> _primaryController;
-        private BaseController PrimaryBaseController => _primaryController.Value;
+        internal UserType CurrentUserType { get; private set; }
+        private BaseController _primaryBaseController;
 
 
         internal override void Start()
         {
-            LoggedOnUser = Login();
-            _primaryController = new Lazy<BaseController>(BuildPrimaryController(this));
-            PrimaryBaseController.Start();
+            CurrentUserType = UserSelect();
+            _primaryBaseController = BuildPrimaryController(this);
+            _primaryBaseController.Start();
         }
 
         /// <summary>
-        /// login method
+        /// method to select user type 
         /// potentially possible to inject real login from console
         /// </summary>
         /// <returns>by default returns fake user</returns>
-        private User Login()
+        private UserType UserSelect()
         {
             Debug.Assert(Program.PrototypeMode);
 
@@ -40,16 +39,19 @@ namespace WdtAsrA1.Controller
             Console.WriteLine(greetingHeader.MenuHeaderPad());
 
             // optional params
-            List<string> extraOptions = new List<string> {"List rooms", "List slots"};
+            var extraOptions = new List<string> {"List rooms", "List slots"};
 
             while (true)
             {
-                var userLogon = SelectUserMenu(extraOptions);
+                var mainMenuOutput = BuildSelectUserMenu(extraOptions);
                 var maxInput =
-                    Enum.GetNames(typeof(UserType)).Length + extraOptions.Count; // extra two options for listings
-                userLogon.Append($"{Environment.NewLine}{++maxInput}. Quit{Environment.NewLine}");
-                var option = GetInput(userLogon.ToString(), maxInput);
-                if (option < 0) continue;
+                    Enum.GetNames(typeof(UserType)).Length + extraOptions.Count; // extra two options for listings 
+                var option = GetInput(mainMenuOutput.ToString(), ++maxInput);
+                while (option < 0)
+                {
+                    option = GetInput(maxInput: maxInput);
+                }
+
                 if (option == maxInput) Environment.Exit(0);
 
                 switch (option)
@@ -61,9 +63,9 @@ namespace WdtAsrA1.Controller
                         ListSlots();
                         break;
                     default:
-                        option -= extraOptions.Count; // reverse compensation fro first two options
-                        var user = UserFactory.MakeUserFromInt(--option);
-                        return user;
+                        var selectedUserNumber =
+                            option - extraOptions.Count; // reverse compensation fro first two options
+                        return (UserType) selectedUserNumber;
                 }
             }
         }
@@ -73,48 +75,85 @@ namespace WdtAsrA1.Controller
         /// </summary>
         private static void ListAllRooms()
         {
-            var roomsDisplay = new StringBuilder($"{Environment.NewLine}--- All rooms---");
+            try
+            {
+                var header = new StringBuilder($"{Environment.NewLine}--- All rooms---");
 
-            DalProxy
-                .MainMenu
-                .Rooms
-                .ToList()
-                .ForEach(r =>
-                    roomsDisplay.Append($"{Environment.NewLine}{r.RoomID}")
+                DalFactory
+                    .RoomDal
+                    .Rooms
+                    .ToList()
+                    .ForEach(r =>
+                        header.Append($"{Environment.NewLine}{r.RoomID}")
                     );
-            Console.WriteLine(roomsDisplay);
+                Console.WriteLine(header);
+                Console.WriteLine();
+            }
+            catch (SqlException)
+            {
+                Console.WriteLine("<No Rooms>");
+                Console.WriteLine();
+            }
         }
 
 
         private static void ListSlots()
         {
             Console.WriteLine();
-            var date = GetDate("Enter date for slots (dd-mm-yyyy):");
-            Console.WriteLine(date.Date);
+            var date = GetDate("Enter date for slots (d-m-yyyy):");
+
+            try
+            {
+                var slots = DalFactory
+                    .SlotDal
+                    .SlotsForDate(date)
+                    .ToList();
+
+
+                if (slots.Any())
+                {
+                    var slotsListOutput = new StringBuilder();
+                    slotsListOutput.SlotsListOutput(slots);
+                    Console.WriteLine(slotsListOutput);
+                    Console.WriteLine();
+                }
+                else
+                {
+                    Console.WriteLine("<no slots>");
+                    Console.WriteLine();
+                }
+            }
+            catch (SqlException)
+            {
+                Console.WriteLine("<no slots>");
+                Console.WriteLine();
+            }
         }
-        
+
 
         /// <summary>
         /// build user type select menu
         /// </summary>
         /// <returns>user logon requests</returns>
-        private static StringBuilder SelectUserMenu(List<string> extraOptions)
+        private static StringBuilder BuildSelectUserMenu(List<string> extraOptions)
         {
-            const string greetingHeader = "Main Menu";
+            const string greetingHeader = "-- Main Menu --";
 
             // essentially a hacky way to override console design limitation 
 
-            var primaryMenu = new StringBuilder(greetingHeader);
-            primaryMenu.Append($"{Environment.NewLine}{greetingHeader.MenuHeaderPad()}");
-
+            var primaryMenu = new StringBuilder(greetingHeader + Environment.NewLine);
+            
             var count = 0;
 
             extraOptions
                 .ForEach(opt => primaryMenu.Append($"{Environment.NewLine}{++count}. {opt}"));
-            
+
             Enum.GetNames(typeof(UserType))
                 .ToList()
                 .ForEach(userType => primaryMenu.Append($"{Environment.NewLine}{++count}. {userType} menu"));
+
+            primaryMenu.Append($"{Environment.NewLine}{++count}. Quit{Environment.NewLine}");
+
             return primaryMenu;
         }
     }

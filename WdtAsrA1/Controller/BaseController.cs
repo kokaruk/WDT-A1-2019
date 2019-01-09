@@ -34,7 +34,7 @@ namespace WdtAsrA1.Controller
             {
                 var baseNamespaceName = mainMenuController.GetType().Namespace;
                 var controllerTypeName =
-                    $"{baseNamespaceName}.{mainMenuController.LoggedOnUser.UserType.ToString()}Primary";
+                    $"{baseNamespaceName}.{mainMenuController.CurrentUserType.ToString()}Primary";
                 // use reflection to create instance 
                 var controllerType = Type.GetType(controllerTypeName, true);
                 var instance = (BaseController) Activator.CreateInstance(controllerType, mainMenuController);
@@ -92,7 +92,7 @@ namespace WdtAsrA1.Controller
         /// get user input and translate to date
         /// </summary>
         /// <returns></returns>
-        internal static DateTime GetDate(string prompt = "Type Date")
+        internal static DateTime GetDate(string prompt = "Date (d-m-yyyy): ")
         {
             var enAu = new CultureInfo("en-AU");
             
@@ -100,10 +100,21 @@ namespace WdtAsrA1.Controller
             {
                 Console.Write(prompt);
                 var input = Console.ReadLine();
-                if (DateTime.TryParseExact(input, "dd-mm-yyyy", enAu,
-                    DateTimeStyles.None, out var dateValue)) return dateValue;
-                Console.WriteLine("Invalid Input");
-                Console.WriteLine();
+                if (DateTime.TryParseExact(input, "d-M-yyyy", enAu,
+                    DateTimeStyles.None, out var dateValue) && dateValue.Date >= DateTime.Now.Date ) return dateValue;
+
+                if (dateValue.Date < DateTime.Now.Date)
+                {
+                    Console.WriteLine("Can't travel in past time");
+                    Console.WriteLine();   
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Input");
+                    Console.WriteLine();    
+                }
+                
+                
             }      
         }
         
