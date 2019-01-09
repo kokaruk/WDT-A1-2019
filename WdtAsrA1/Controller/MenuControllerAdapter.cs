@@ -92,36 +92,39 @@ namespace WdtAsrA1.Controller
         /// list staff.
         /// sett message to list of staff
         /// </summary>
-        protected void ListStaff()
+        protected void ListUsers(char userIdDescriptor)
         {
-            var staff = DalFactory.UserDal.StaffUsers.ToList();
-            if (staff.Any())
+            var userType = userIdDescriptor == 'e' ? "Staff" : "Students";
+            var users = DalFactory.UserDal.GetAllUsers().ToList()
+                .FindAll(user => user.UserID.StartsWith(userIdDescriptor));
+            if (users.Any())
             {
                 const string format = "{0}{1,-11}{2,-11}{3}";
 
-                var staffList = new StringBuilder($"{Environment.NewLine} --- all staff ---");
-                staffList.Append(
+                var usersList = new StringBuilder($"{Environment.NewLine} --- {userType} list  ---");
+                usersList.Append(
                     string.Format(format,
                         Environment.NewLine,
-                        "Staff Id",
+                        "Id",
                         "Name",
                         "Email"
                     ));
-                staff
+                users
                     .ForEach(user =>
-                        staffList.Append(
+                        usersList.Append(
                             string.Format(format,
                                 Environment.NewLine,
                                 user.UserID,
                                 user.Name,
                                 user.Email)));
-                Message = staffList.ToString();
+                Message = usersList.ToString();
             }
             else
             {
-                Message = "<no staff found";
+                Message = $"<no {userType} found>";
             }
         }
+
 
         /// <summary>
         /// factory method to make a room 
@@ -161,33 +164,35 @@ namespace WdtAsrA1.Controller
                 return GetRoom();
             }
         }
-        
+
         /// <summary>
         /// factory method to make staff object based on id input string
         /// </summary>
         /// <returns>returns staff object</returns>
-        protected User GetStaff()
+        protected User GetUser(char userIdDescriptor)
         {
             Console.WriteLine(Message);
-            Console.Write("Enter Staff ID: ");
-            string staffId;
+            var prompt = userIdDescriptor == 'e' ? "Enter Staff ID: " : "Enter Student ID: ";
+            Console.Write(prompt);
+            string userId;
             while (true)
             {
-                staffId = Console.ReadLine();
-                if (!string.IsNullOrWhiteSpace(staffId)) break;
+                userId = Console.ReadLine();
+                if (!string.IsNullOrWhiteSpace(userId)) break;
             }
 
             try
             {
-                return DalFactory.UserDal.StaffUsers.First(staff => staff.UserID.Equals(staffId.ToLower()));
+                return DalFactory.UserDal.GetAllUsers().First(user =>
+                    user.UserID.Equals(userId.ToLower()) && user.UserID.StartsWith(userIdDescriptor));
             }
             catch (Exception)
             {
                 Message = "Incorrect input, try again";
-                return GetStaff();
+                return GetUser(userIdDescriptor);
             }
         }
-        
+
         /// <summary>
         /// get time in allowed business hours for a spe
         /// </summary>
@@ -238,6 +243,5 @@ namespace WdtAsrA1.Controller
                 }
             }
         }
-        
     }
 }

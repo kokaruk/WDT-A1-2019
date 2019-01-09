@@ -1,12 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data.SqlClient;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using WdtAsrA1.DAL;
 using WdtAsrA1.Model;
 using WdtAsrA1.Utils;
@@ -35,7 +32,7 @@ namespace WdtAsrA1.Controller
                         Parent.Start();
                         break;
                     case 1:
-                        ListStaff();
+                        ListUsers('e');
                         break;
                     case 2:
                         RoomAvailability();
@@ -75,25 +72,28 @@ namespace WdtAsrA1.Controller
 
         private void RoomAvailability()
         {
-            Message = string.Empty;
-            var room = GetRoom();
             var date = GetDate();
             try
             {
-                var slots = room == null
-                    ? DalFactory.SlotDal.SlotsForDate(date).ToList()
-                    : DalFactory.SlotDal.SlotsForDate(date).ToList()
-                        .FindAll(slot => slot.StartTime.Date.Equals(date.Date));
-                if (slots.Any())
-                {
-                    var slotsListOutput = new StringBuilder();
-                    slotsListOutput.SlotsListOutput(slots);
-                    Message = slotsListOutput.ToString();
-                }
-                else
-                {
-                    Message = "All slots are empty";
-                }
+                // stack overflow dot com FTW
+                var duplicates = DalFactory.SlotDal
+                    .SlotsForDate(date)
+                    .GroupBy(s => s.RoomID)
+                    .Where(g => g.Skip(1).Any())
+                    .Select(g => g.Key);
+
+                var rooms = DalFactory
+                    .RoomDal
+                    .Rooms
+                    .Where(room => !duplicates.Contains(room.RoomID));
+
+                var header = new StringBuilder($"{Environment.NewLine}--- Rooms available on {date.Date:d-MM-yyyy}---");
+
+                rooms.ToList()
+                    .ForEach(r =>
+                        header.Append($"{Environment.NewLine}{r.RoomID}")
+                    );
+                Message = header.ToString();
             }
             catch (SqlException)
             {
@@ -138,8 +138,8 @@ namespace WdtAsrA1.Controller
                 return;
             }
 
-            ListStaff();
-            var staff = GetStaff();
+            ListUsers('e');
+            var staff = GetUser('e');
 
             // check constraints
             // staff can have max 4 slots a day
@@ -153,6 +153,12 @@ namespace WdtAsrA1.Controller
                 return;
             }
 
+            if (staffBookings.Any(slot => slot.StartTime.Hour.Equals(dateCombined.Hour)))
+            {
+                Message = "Staff member has booking for this time";
+                return;
+            }
+
             DalFactory.SlotDal.CreateSlot(room.RoomID, dateCombined, staff.UserID);
             Message = "New slot added";
         }
@@ -160,9 +166,9 @@ namespace WdtAsrA1.Controller
 
         private void RemoveSlot()
         {
-            ListStaff();
+            ListUsers('e');
             const string message = "No upcoming slots for staff member";
-            var staff = GetStaff();
+            var staff = GetUser('e');
             try
             {
                 var slots = DalFactory.SlotDal
@@ -170,7 +176,7 @@ namespace WdtAsrA1.Controller
 
                 if (slots.Any())
                 {
-                    var slotsView = BuilSlotsList(slots);
+                    var slotsView = BuildSlotsList(slots);
                     var option = GetInput(slotsView.ToString(), slotsView.Length);
                     var candidateSlot = slots[--option];
                     if (string.IsNullOrWhiteSpace(candidateSlot.BookedInStudentId))
@@ -194,9 +200,8 @@ namespace WdtAsrA1.Controller
             }
         }
 
-        
 
-        private StringBuilder BuilSlotsList(List<Slot> slots)
+        private StringBuilder BuildSlotsList(List<Slot> slots)
         {
             var slotsView = new StringBuilder();
             slotsView.Append($"{Environment.NewLine} --- List slots ---");
