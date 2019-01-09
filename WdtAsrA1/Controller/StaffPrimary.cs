@@ -24,7 +24,7 @@ namespace WdtAsrA1.Controller
             while (true)
             {
                 var maxInput = BuildMenu(out var menu);
-                var option = GetInput(menu.ToString());
+                var option = GetInput(menu.ToString(), maxInput);
                 if (option == maxInput) Parent.Start(); // go back 
                 switch (option)
                 {
@@ -44,7 +44,7 @@ namespace WdtAsrA1.Controller
                         RemoveSlot();
                         break;
                     default:
-                        return;
+                        continue;
                 }
             }
         }

@@ -22,7 +22,7 @@ namespace WdtAsrA1.Controller
             while (true)
             {
                 var maxInput = BuildMenu(out var menu);
-                var option = GetInput(menu.ToString());
+                var option = GetInput(menu.ToString(), maxInput);
                 if (option == maxInput) Parent.Start(); // go back 
                 switch (option)
                 {
@@ -42,7 +42,7 @@ namespace WdtAsrA1.Controller
                         CancelBooking();
                         break;
                     default:
-                        return;
+                        continue;
                 }
             }
         }
@@ -131,7 +131,7 @@ namespace WdtAsrA1.Controller
             if (staffBookings.Any())
             {
                 var slotsView = BuildSlotsList(staffBookings, staff, date);
-                var option = GetInput(slotsView.ToString(), slotsView.Length);
+                var option = GetInput(slotsView.ToString(), staffBookings.Count);
                 var candidateSlot = staffBookings[--option];
                 DalFacade.SlotDal.BookSlot(candidateSlot, student);
 
@@ -155,8 +155,8 @@ namespace WdtAsrA1.Controller
                 .FindAll(slot => slot.StaffID.Equals(staff.UserID) && !string.IsNullOrWhiteSpace(slot.BookedInStudentId));
             if (staffBookings.Any())
             {
-                var slotsView = BuildSlotsList(staffBookings, staff, date);
-                var option = GetInput(slotsView.ToString(), slotsView.Length);
+                var slotsView = BuildTakenSlotsList(staffBookings, staff, date);
+                var option = GetInput(slotsView.ToString(), staffBookings.Count);
                 var candidateSlot = staffBookings[--option];
                 DalFacade.SlotDal.UnbookSlot(candidateSlot);
                 
@@ -193,6 +193,36 @@ namespace WdtAsrA1.Controller
                         slot.RoomID,
                         $"{slot.StartTime:hh:mm tt}",
                         $"{slot.StartTime.AddMinutes(Program.SlotDuration):hh:mm tt}")));
+
+            return slotList;
+        }
+        
+        private StringBuilder BuildTakenSlotsList(List<Slot> staffBookings, User staff, DateTime date)
+        {
+            const string format = "{0}{1, -3}{2,-8}{3,-16}{4,-16}{5, -8}";
+            var slotList =
+                new StringBuilder($"{Environment.NewLine}Staff {staff.UserID} bookings on {date:d-MM-yyy}:");
+            var count = 0;
+            slotList.Append(
+                string.Format(format,
+                    Environment.NewLine,
+                    "#",
+                    "Room",
+                    "Start time",
+                    "End time",
+                    "Student Id")
+            );
+
+            staffBookings.ForEach(slot =>
+                slotList.Append(
+                    string.Format(
+                        format,
+                        Environment.NewLine,
+                        $"{++count}.",
+                        slot.RoomID,
+                        $"{slot.StartTime:hh:mm tt}",
+                        $"{slot.StartTime.AddMinutes(Program.SlotDuration):hh:mm tt}",
+                        slot.BookedInStudentId)));
 
             return slotList;
         }
