@@ -23,5 +23,8 @@ namespace WdtAsrA1.DAL
         void CreateSlot(string roomId, DateTime startTime, string staffId);
 
         void DeleteSlot(Slot slot);
+
+        void BookSlot(Slot slot, User user);
+        void UnbookSlot(Slot slot);
     }
 }

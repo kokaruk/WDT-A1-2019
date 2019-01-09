@@ -5,6 +5,6 @@ namespace WdtAsrA1.DAL
 {
     public interface IUserDal
     {
-        IEnumerable<User> StaffUsers { get; }
+        IEnumerable<User> GetAllUsers();
     }
 }

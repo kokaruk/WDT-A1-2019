@@ -35,9 +35,9 @@ namespace WdtAsrA1.Utils
             }
         }
 
-        internal static void SlotsListOutput(this StringBuilder slotsListOutput, List<Slot> slots)
+        internal static void SlotsListForDateOutput(this StringBuilder slotsListOutput, List<Slot> slots, DateTime date)
         {
-            slotsListOutput.Append($"{Environment.NewLine} --- List slots ---");
+            slotsListOutput.Append($"{Environment.NewLine} --- List slots on {date:dd-MM-yyyy}---");
 
             slotsListOutput.Append(
                 $"{Environment.NewLine}{"Room name",-11}{"Start time",-16}{"End time",-16}{"Staff ID",-14}Bookings");
@@ -45,7 +45,7 @@ namespace WdtAsrA1.Utils
             slots
                 .ForEach(s =>
                     slotsListOutput.Append(
-                        $"{Environment.NewLine}{s.RoomID,-11}{$"{s.StartTime:HH:mm}",-16}{$"{s.StartTime.AddMinutes(Program.SlotDuration):HH:mm}",-16}{s.StaffID,-14}{s.BookedInStudentId}")
+                        $"{Environment.NewLine}{s.RoomID,-11}{$"{s.StartTime:hh:mm tt}",-16}{$"{s.StartTime.AddMinutes(Program.SlotDuration):hh:mm tt}",-16}{s.StaffID,-14}{s.BookedInStudentId}")
                 );
         }
     }

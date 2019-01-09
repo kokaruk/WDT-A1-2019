@@ -89,6 +89,27 @@ namespace WdtAsrA1.DAL
 
             DalDbFacade.Instance.ExecuteNonQuery("delete slot", connParams);
         }
-        
+
+        public void BookSlot(Slot slot, User user)
+        {
+            var connParams = new Dictionary<string, dynamic>
+            {
+                {"RoomID", slot.RoomID},
+                {"StartTime", slot.StartTime},
+                {"StudentID", user.UserID}
+            };
+            DalDbFacade.Instance.ExecuteNonQuery("book slot", connParams);
+        }
+
+        public void UnbookSlot(Slot slot)
+        {
+            var connParams = new Dictionary<string, dynamic>
+            {
+                {"RoomID", slot.RoomID},
+                {"StartTime", slot.StartTime}
+            };
+
+            DalDbFacade.Instance.ExecuteNonQuery("unbook slot", connParams);
+        }
     }
 }

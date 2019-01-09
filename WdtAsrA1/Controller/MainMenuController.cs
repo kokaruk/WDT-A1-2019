@@ -113,7 +113,7 @@ namespace WdtAsrA1.Controller
                 if (slots.Any())
                 {
                     var slotsListOutput = new StringBuilder();
-                    slotsListOutput.SlotsListOutput(slots);
+                    slotsListOutput.SlotsListForDateOutput(slots, date);
                     Console.WriteLine(slotsListOutput);
                     Console.WriteLine();
                 }
